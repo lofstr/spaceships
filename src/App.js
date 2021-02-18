@@ -1,23 +1,13 @@
-import logo from './logo.svg';
-import './App.css';
+import firebase from "firebase";
+import "./App.css";
+import Demo from "./components/Demo";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1 style={{ textAlign: "center" }}>Visma - Spaceships</h1>
+      <h4 style={{ textAlign: "center" }}>All output is to console</h4>
+      <Demo></Demo>
     </div>
   );
 }
