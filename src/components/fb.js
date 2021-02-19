@@ -95,12 +95,15 @@ export const unRegisterPark = (regNr) => {
           cost = calcCost(querySnapshot.data().date, new Date());
           return logParking(querySnapshot.data());
         })
-        .then(() => {
-          parkRef.update({
-            parked: null,
-            date: null,
-          });
-          return `spaceship is now unregistered! Cost amounts to ${cost}$`;
+        .then((r) => {
+          // If logging failed - Don't charge money and abort.
+          if (r) {
+            parkRef.update({
+              parked: null,
+              date: null,
+            });
+            return `Spaceship is now unregistered! Cost amounts to ${cost}$`;
+          } else return "Eror unregistering";
         });
     } else {
       return "No spaceship with that registration number is parked.";
@@ -168,11 +171,20 @@ const calcCost = (parkDate, leaveDate) => {
 const logParking = (parkedSpaceship) => {
   // Adds a document with parking information to the log-collection.
   // Occurs on spaceship-pickup.
-  return db.collection("log").add({
-    spot: parkedSpaceship.spot,
-    regNr: parkedSpaceship.parked,
-    pickUpDate: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+  return db
+    .collection("log")
+    .add({
+      spot: parkedSpaceship.spot,
+      regNr: parkedSpaceship.parked,
+      pickUpDate: firebase.firestore.FieldValue.serverTimestamp(),
+    })
+    .then(() => {
+      return true;
+    })
+    .catch((error) => {
+      console.log("Error logging parking: ", error);
+      return false;
+    });
 };
 
 const findReg = (regNr) => {
