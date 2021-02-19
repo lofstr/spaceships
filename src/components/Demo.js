@@ -1,11 +1,6 @@
 import React, { Component, useState } from "react";
 import Button from "./Button";
-import {
-  getNumberOfLevels,
-  initParkinglot,
-  park,
-  unRegisterPark,
-} from "./Firebase/fb";
+import { getNumberOfLevels, initParkinglot, park, unRegisterPark } from "./fb";
 
 export default function Demo(props) {
   const [regnr, setInputValue] = useState("");
@@ -19,7 +14,8 @@ export default function Demo(props) {
   };
 
   const parkCar = () => {
-    park(regnr).then((r) => console.log(r));
+    if (regnr === "") console.log("No registration number was entered");
+    else park(regnr).then((r) => console.log(r));
   };
 
   const unregister = () => {

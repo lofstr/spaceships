@@ -2,7 +2,7 @@ import firebase from "firebase/app";
 import "firebase/firestore";
 import "firebase/auth";
 
-/* -------------------- Config -------------------- */
+/* ------------------------- Config ------------------------- */
 
 const firebaseConfig = {
   apiKey: "AIzaSyDlWUdUdE7ipYaGaqjWcrkwduomH_Qc3YQ",
@@ -21,16 +21,17 @@ if (!firebase.apps.length) {
 
 const db = firebase.firestore();
 
-const LEVELS = 3;
-const PARKING_SPACE = 15;
+const LEVELS = 3; // Floors on the parkinggarage
+const PARKING_SPACE = 15; // Slots per floor in the parkingarage
 
-/* -------------------- Main Functions --------------------*/
+/* ------------------------- Main Functions -------------------------*/
 export const getNumberOfLevels = () => {
-  var level = 0;
+  // Returns the number of levels on the parking garage (Default 3).
   var garageRef = db.collection("garage").orderBy("level", "desc").limit(1);
   return garageRef.get().then((querySnapshot) => {
+    let level = 0;
     querySnapshot.forEach((doc) => {
-      console.log("LEVEL: ", doc.data().level);
+      //console.log("LEVEL: ", doc.data().level);
       level = doc.data().level;
     });
     return level;
@@ -38,6 +39,9 @@ export const getNumberOfLevels = () => {
 };
 
 export const initParkinglot = (levels = LEVELS, slots = PARKING_SPACE) => {
+  // Creates as many floors as inputed in LEVELS.
+  // Is not dynamic and check is currently in place to avoid multiple setups.
+  // If changing LEVELS you need to purge collection.
   return getNumberOfLevels().then((r) => {
     if (levels === r) {
       console.log("Already have that many garage levels.");
@@ -64,6 +68,8 @@ export const initParkinglot = (levels = LEVELS, slots = PARKING_SPACE) => {
 };
 
 export const addParkingSlots = (docRef, n) => {
+  // Creates collection with n=PARKING_SPACE number of documents in each document in garage.
+  // i.e. adds 15 parking spaces to each floor in the garage.
   for (let index = 0; index < n; index++) {
     db.collection("garage")
       .doc(docRef)
@@ -77,10 +83,12 @@ export const addParkingSlots = (docRef, n) => {
 };
 
 export const unRegisterPark = (regNr) => {
-  return findReg(regNr).then((result) => {
-    if (result) {
+  // Checks if regNr exists and if so removes spaceship from parking lot,
+  // ...calculates cost and then creates a log of event.
+  return findReg(regNr).then((spaceshipRef) => {
+    if (spaceshipRef) {
       let cost = 0;
-      const parkRef = db.doc(result);
+      const parkRef = db.doc(spaceshipRef);
       return parkRef
         .get()
         .then((querySnapshot) => {
@@ -92,24 +100,24 @@ export const unRegisterPark = (regNr) => {
             parked: null,
             date: null,
           });
-          return `Car is now unregistered! Cost amounts to ${cost}$`;
+          return `spaceship is now unregistered! Cost amounts to ${cost}$`;
         });
     } else {
-      return "No car with that registration number is parked.";
+      return "No spaceship with that registration number is parked.";
     }
   });
 };
 
-// Park
 export const park = (regNr) => {
-  if (!regNr) return "No registration number was entered";
+  // Adds the specified regNr to any random available space in the parking garage.
+  // Checks if regNr already parked and if parking garage is full.
   return findReg(regNr).then((result) => {
-    // Checks if Car is already registered.
+    // Checks if spaceship is already registered.
     if (result) {
-      return "Car already parked";
+      return "spaceship already parked";
     } else {
       // If not, Continue.
-      var carParked = false;
+      var spaceshipParked = false;
       return db
         .collection("garage")
         .get()
@@ -124,17 +132,17 @@ export const park = (regNr) => {
           return Promise.all(p);
         })
         .then((result) => {
-          // If there are any empty slots. Add a car and return true.
+          // If there are any empty slots. Add a spaceship and return true.
           // Return alse otherwise
           result = result.flat();
-          if (result.length !== 0 && carParked === false) {
-            return addCar(result[0].level, result[0].spotId, regNr).then(
+          if (result.length !== 0 && spaceshipParked === false) {
+            return addSpaceship(result[0].level, result[0].spotId, regNr).then(
               (params) => {
                 return true;
               }
             );
           } else {
-            console.log("Failed to park car. No more room in garage.");
+            console.log("Failed to park spaceship. No more room in garage.");
             return false;
           }
         })
@@ -145,30 +153,37 @@ export const park = (regNr) => {
   });
 };
 
-/*-------------------- Helper functions --------------------*/
-const calcCost = (parkDate, leaveDate) => {
-  // + 1 for every started hour.
-  var hours = Math.round(Math.abs(parkDate.toDate() - leaveDate) / 36e6) + 1;
+/*------------------------- Helper functions -------------------------*/
 
-  if (hours >= 24) return 50;
-  else if (hours <= 0) return 15;
-  else return Math.round(hours * 15);
+const calcCost = (parkDate, leaveDate) => {
+  // If parked more than 24 hours, it will only charge additional at next day, i.e. at 48 hours etc.
+  var difference = parkDate.toDate().getTime() - leaveDate.getTime();
+  var hoursDifference = Math.abs(Math.floor(difference / 1000 / 60 / 60));
+  // How many 24hour cycles have spaceship been parked.
+  if (hoursDifference >= 24) return Math.floor(hoursDifference / 24) * 50;
+  else if (hoursDifference <= 0) return 15;
+  else return Math.round(hoursDifference * 15);
 };
 
-const logParking = (data) => {
+const logParking = (parkedSpaceship) => {
+  // Adds a document with parking information to the log-collection.
+  // Occurs on spaceship-pickup.
   return db.collection("log").add({
-    spot: data.spot,
-    regNr: data.parked,
-    pickupdate: firebase.firestore.FieldValue.serverTimestamp(),
+    spot: parkedSpaceship.spot,
+    regNr: parkedSpaceship.parked,
+    pickUpDate: firebase.firestore.FieldValue.serverTimestamp(),
   });
 };
 
 const findReg = (regNr) => {
-  // Kolla om reg är > 1 och rapportera fel !!!
-  //-----------------------------------
-  // Returns path for regNr if parked.
+  // Returns document path for regNr if parked.
   const unregRef = db.collectionGroup("parking").where("parked", "==", regNr);
   return unregRef.get().then((querySnapshot) => {
+    if (querySnapshot.size >= 2)
+      // Error handler - If two spaceships with same reg are parked.
+      console.log(
+        `Possible error, found ${querySnapshot.size} spaceships with same registration number parked.`
+      );
     let match = "";
     querySnapshot.forEach((doc) => {
       match = doc.ref.path;
@@ -177,8 +192,8 @@ const findReg = (regNr) => {
   });
 };
 
-const addCar = (garageId, spotId, regNr) => {
-  // Uppdates the garage for specified IDs to contain a parked car.
+const addSpaceship = (garageId, spotId, regNr) => {
+  // Uppdates the garage for specified IDs to contain a parked spaceship.
   const parkRef = db
     .collection("garage")
     .doc(garageId)
@@ -191,17 +206,17 @@ const addCar = (garageId, spotId, regNr) => {
       date: firebase.firestore.FieldValue.serverTimestamp(),
     })
     .then(() => {
-      console.log("Successfully parked a car");
+      console.log("Successfully parked a spaceship");
       return true;
     })
     .catch((error) => {
-      console.log("Error parking a car: ", error);
+      console.log("Error parking a spaceship: ", error);
     });
 };
 
 const findEmptySlot = (docId) => {
   // Returns reference to all empty parking slots.
-  var data = [];
+  var emptySlots = [];
   const slotRef = db
     .collection("garage")
     .doc(docId)
@@ -212,9 +227,13 @@ const findEmptySlot = (docId) => {
     .get()
     .then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
-        data.push({ spot: doc.data().spot, level: docId, spotId: doc.id });
+        emptySlots.push({
+          spot: doc.data().spot,
+          level: docId,
+          spotId: doc.id,
+        });
       });
-      return data;
+      return emptySlots;
     })
     .catch((error) => {
       console.log("Error getting parking slots: ", error);

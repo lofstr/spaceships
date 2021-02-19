@@ -1,20 +1,33 @@
 # Visma projekt
 
-- Tre våningar á 15 platser
+Lösningen är gjord med hjälp av Firebase/Firestore och instantieras med hjälp av React.
 
-* En tabell för parkeringsgarage (collection)
-  --> En item för varje våning med följande värde:
-  Våning, antal platser, collection med parkeringsplatser:
-  --> Varje parkeringsplats har följande värden: Parkeringsplats(Int), isParked (False ? RegNummer), Date(Optional)
+Run project with npm start
+Backend-code is under src/components/fb.js
+Other componenents were made for some sort of UI.
 
-* En loggbok (collection)
+## Tre våningar á 15 platser
 
-- Unika idn -
-  Vilken plats rymdskeppet hämtades från.
-  RegNummer
-  Timestamp
+En tabell för parkeringsgarage (collection)
+--> En item för varje våning med följande värde:
 
-Tankar:
+- Våning,
+- antal platser,
+- collection med parkeringsplatser:
+  - Parkeringsplats(Int),
+  - parked (False ? RegNummer),
+  - Date
+
+## En loggbok (collection)
+
+Unika idn
+
+- Vilken plats rymdskeppet hämtades från.
+- RegNummer
+- Timestamp
+
+## Tankar
+
 Ifall man inte sparar när man parkerat finns ingen traceability - Lösningar:
 
 - Spara priset i loggboken vid utcheckning
@@ -25,7 +38,6 @@ Avgränsningar
 
 - Kan inte parkera om regnumret redan finns parkerat.
 - Parkerar på random plats
-- Proof-of-concept (Inte lagt fokus på säkerhet)
 
 Förbättringar
 
@@ -33,3 +45,4 @@ Förbättringar
 - Inga checks ifall någon spammar atm - Då kan man registrera flera på samma regnummer.
 - Borde skickas upp till molnet (Cloud Functions) och hanteras där för säkerhet.
 - Parkera på specifik plats
+- Lägga till fler våningar och plats på våningar kan göras mer dynamiskt.
