@@ -162,7 +162,7 @@ const calcCost = (parkDate, leaveDate) => {
   // How many 24hour cycles have spaceship been parked.
   if (hoursDifference >= 24) return Math.floor(hoursDifference / 24) * 50;
   else if (hoursDifference <= 0) return 15;
-  else return Math.round(hoursDifference * 15);
+  else return Math.round(hoursDifference * 15); // Maybe omit rounding, depending on implementation.
 };
 
 const logParking = (parkedSpaceship) => {
