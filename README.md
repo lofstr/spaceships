@@ -1,4 +1,4 @@
-# Visma projekt
+# Spaceship-Demo
 
 Lösningen är gjord med hjälp av Firebase/Firestore och instantieras med hjälp av React.
 
