@@ -111,7 +111,7 @@ export const unRegisterPark = (regNr) => {
   });
 };
 
-export const park = (regNr) => {
+export const park = (regNr, date = new Date()) => {
   // Adds the specified regNr to any random available space in the parking garage.
   // Checks if regNr already parked and if parking garage is full.
   return findReg(regNr).then((result) => {
@@ -139,11 +139,14 @@ export const park = (regNr) => {
           // Return alse otherwise
           result = result.flat();
           if (result.length !== 0 && spaceshipParked === false) {
-            return addSpaceship(result[0].level, result[0].spotId, regNr).then(
-              (params) => {
-                return true;
-              }
-            );
+            return addSpaceship(
+              result[0].level,
+              result[0].spotId,
+              regNr,
+              date
+            ).then((params) => {
+              return true;
+            });
           } else {
             console.log("Failed to park spaceship. No more room in garage.");
             return false;
@@ -204,7 +207,7 @@ const findReg = (regNr) => {
   });
 };
 
-const addSpaceship = (garageId, spotId, regNr) => {
+const addSpaceship = (garageId, spotId, regNr, date) => {
   // Uppdates the garage for specified IDs to contain a parked spaceship.
   const parkRef = db
     .collection("garage")
@@ -215,7 +218,7 @@ const addSpaceship = (garageId, spotId, regNr) => {
   return parkRef
     .update({
       parked: regNr,
-      date: firebase.firestore.FieldValue.serverTimestamp(),
+      date: date,
     })
     .then(() => {
       console.log("Successfully parked a spaceship");
