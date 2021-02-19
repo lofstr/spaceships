@@ -2,9 +2,10 @@
 
 Lösningen är gjord med hjälp av Firebase/Firestore och instantieras med hjälp av React.
 
-Run project with npm start
-Backend-code is under src/components/fb.js
-Other componenents were made for some sort of UI.
+Run project with npm start  
+Backend-code is under src/components/fb.js  
+Other componenents were made for some sort of UI used for testing.  
+Database is firestore.
 
 ## Tre våningar á 15 platser
 
